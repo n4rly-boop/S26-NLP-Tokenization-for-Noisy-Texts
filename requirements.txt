@@ -1,0 +1,12 @@
+datasets>=2.14
+transformers>=4.35
+torch>=2.0
+seqeval
+numpy
+pandas
+tqdm
+scikit-learn
+sentencepiece
+protobuf
+jupyter
+ipykernel
