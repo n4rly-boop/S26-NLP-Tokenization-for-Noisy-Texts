@@ -1,6 +1,7 @@
 datasets>=2.14,<3.0
 transformers>=4.35
 torch>=2.0
+accelerate>=1.1.0
 seqeval
 numpy
 pandas
