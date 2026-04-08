@@ -417,8 +417,10 @@ def apply_social_noise(
                     replacement = random.choice(neighbors)
                     tok = tok[:j] + replacement + tok[j + 1:]
 
-            # Step 2: repeat last character 2-3 times (O-tagged only)
-            if random.random() < 0.3 and is_o and len(tok) >= 1:
+            # Step 2: repeat last character 2-3 times (O-tagged, non-punctuation only)
+            punct_set = set(string.punctuation)
+            is_punct = tok and all(ch in punct_set for ch in tok)
+            if random.random() < 0.3 and is_o and len(tok) >= 1 and not is_punct:
                 repeat_count = random.randint(2, 3)
                 tok = tok + tok[-1] * repeat_count
 
