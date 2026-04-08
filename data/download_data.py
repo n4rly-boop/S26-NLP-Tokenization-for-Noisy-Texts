@@ -22,8 +22,10 @@ def download_conll2003(output_dir: str = OUTPUT_DIR) -> None:
 
     os.makedirs(output_dir, exist_ok=True)
 
-    print("Downloading CoNLL-2003 from HuggingFace...")
-    dataset = load_dataset("conll2003", trust_remote_code=True)
+    # "eriktks/conll2003" is a Parquet-based mirror of CoNLL-2003
+    # (the original "conll2003" uses a loading script no longer supported in datasets >= 3.x)
+    print("Downloading CoNLL-2003 from HuggingFace (Parquet version)...")
+    dataset = load_dataset("eriktks/conll2003")
 
     # Save each split as JSONL
     for split in ["train", "validation", "test"]:
