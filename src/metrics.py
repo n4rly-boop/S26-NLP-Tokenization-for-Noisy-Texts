@@ -48,13 +48,23 @@ def compute_tokenizer_stats(
         total_words += len(words)
 
         # Tokenize the full sentence at once (faster than word-by-word)
-        encoding = tokenizer(
-            words,
-            is_split_into_words=True,
-            add_special_tokens=False,
-            truncation=True,
-            max_length=512,
-        )
+        # Some tokenizers (ByT5, GPT-2) don't support is_split_into_words,
+        # fall back to joining words into a plain string.
+        try:
+            encoding = tokenizer(
+                words,
+                is_split_into_words=True,
+                add_special_tokens=False,
+                truncation=True,
+                max_length=512,
+            )
+        except (ValueError, TypeError):
+            encoding = tokenizer(
+                " ".join(words),
+                add_special_tokens=False,
+                truncation=True,
+                max_length=512,
+            )
         ids = encoding["input_ids"]
         total_tokens += len(ids)
 
