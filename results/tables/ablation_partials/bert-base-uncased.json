@@ -1,0 +1,82 @@
+[
+  {
+    "f1": 0.7829,
+    "precision": 0.7585,
+    "recall": 0.8089,
+    "model": "bert-base-uncased",
+    "noise": "ocr",
+    "config": "all"
+  },
+  {
+    "f1": 0.6654,
+    "precision": 0.7232,
+    "recall": 0.6161,
+    "model": "bert-base-uncased",
+    "noise": "ocr",
+    "config": "-charfix"
+  },
+  {
+    "f1": 0.7537,
+    "precision": 0.7012,
+    "recall": 0.8146,
+    "model": "bert-base-uncased",
+    "noise": "ocr",
+    "config": "-spellcorrect"
+  },
+  {
+    "f1": 0.8297,
+    "precision": 0.8274,
+    "recall": 0.832,
+    "model": "bert-base-uncased",
+    "noise": "asr",
+    "config": "all"
+  },
+  {
+    "f1": 0.8297,
+    "precision": 0.8274,
+    "recall": 0.832,
+    "model": "bert-base-uncased",
+    "noise": "asr",
+    "config": "-truecase"
+  },
+  {
+    "f1": 0.8255,
+    "precision": 0.823,
+    "recall": 0.8281,
+    "model": "bert-base-uncased",
+    "noise": "asr",
+    "config": "-homophone"
+  },
+  {
+    "f1": 0.7318,
+    "precision": 0.6763,
+    "recall": 0.7973,
+    "model": "bert-base-uncased",
+    "noise": "social",
+    "config": "all"
+  },
+  {
+    "f1": 0.7276,
+    "precision": 0.6713,
+    "recall": 0.7943,
+    "model": "bert-base-uncased",
+    "noise": "social",
+    "config": "-unrepeat"
+  },
+  {
+    "f1": 0.732,
+    "precision": 0.6766,
+    "recall": 0.7973,
+    "model": "bert-base-uncased",
+    "noise": "social",
+    "config": "-unabbrev"
+  },
+  {
+    "f1": 0.6075,
+    "precision": 0.5173,
+    "recall": 0.7357,
+    "model": "bert-base-uncased",
+    "noise": "social",
+    "config": "-spellcorrect"
+  }
+]

@@ -1,0 +1,304 @@
+"""
+Leave-one-out ablation of preprocessing components.
+
+For each noise type, evaluate the model on:
+  - ALL components enabled (baseline reference for that noise)
+  - each component removed in turn
+
+Configs (all noise types):
+    OCR    : all, -charfix, -spellcorrect
+    ASR    : all, -truecase, -homophone
+    Social : all, -unrepeat, -unabbrev, -spellcorrect
+
+Invocation: one subprocess per model. Each subprocess loads the model once,
+runs all 10 configs against the same fresh test-set tokens, then exits so
+the next model starts with clean MPS state.
+
+Output: results/tables/ablation_partials/<safe_model>.json containing 10
+records with keys {model, noise, config, f1, precision, recall}.
+
+Usage:
+    python scripts/eval_ablation.py <model_name>
+"""
+from __future__ import annotations
+
+import gc
+import glob
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+import torch
+from datasets import Dataset, load_from_disk
+from transformers import (
+    AutoTokenizer,
+    BertForTokenClassification,
+    DataCollatorForTokenClassification,
+    GPT2ForTokenClassification,
+    T5Config,
+    Trainer,
+    TrainingArguments,
+)
+
+from train import (
+    ByT5ForTokenClassification,
+    make_compute_metrics,
+    tokenize_and_align_labels,
+)
+from preprocess import (
+    ocr_char_fix, ocr_spell_correct,
+    asr_truecase, asr_homophone_fix,
+    social_unrepeat, social_unabbrev, social_spell_correct,
+    load_truecase_dict,
+)
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+LABEL_NAMES = [
+    "O", "B-PER", "I-PER", "B-ORG", "I-ORG",
+    "B-LOC", "I-LOC", "B-MISC", "I-MISC",
+]
+NUM_LABELS = len(LABEL_NAMES)
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+CHECKPOINTS_DIR = os.path.join(ROOT, "results", "checkpoints")
+NOISY_DIR = os.path.join(ROOT, "data", "noisy")
+PREPROC_DIR = os.path.join(ROOT, "data", "preprocessed")
+PARTIALS_DIR = os.path.join(ROOT, "results", "tables", "ablation_partials")
+TRUECASE_PATH = os.path.join(PREPROC_DIR, "truecase_dict.json")
+
+if torch.backends.mps.is_available():
+    DEVICE = "mps"
+elif torch.cuda.is_available():
+    DEVICE = "cuda"
+else:
+    DEVICE = "cpu"
+
+
+# ---------------------------------------------------------------------------
+# Component-level preprocessing dispatcher
+# ---------------------------------------------------------------------------
+
+
+def build_pipeline(noise: str, skip: str | None):
+    """
+    Return a function tokens -> tokens for the given noise type, skipping
+    the component named `skip` (None = apply all components).
+    """
+    if noise == "ocr":
+        def pipe(tokens):
+            out = tokens
+            if skip != "charfix":
+                out = ocr_char_fix(out)
+            if skip != "spellcorrect":
+                out = ocr_spell_correct(out)
+            return out
+        return pipe
+
+    if noise == "asr":
+        def pipe(tokens):
+            out = tokens
+            if skip != "truecase":
+                out = asr_truecase(out)
+            if skip != "homophone":
+                out = asr_homophone_fix(out)
+            return out
+        return pipe
+
+    if noise == "social":
+        def pipe(tokens):
+            out = tokens
+            if skip != "unrepeat":
+                out = social_unrepeat(out)
+            if skip != "unabbrev":
+                out = social_unabbrev(out)
+            if skip != "spellcorrect":
+                out = social_spell_correct(out)
+            return out
+        return pipe
+
+    raise ValueError(noise)
+
+
+CONFIGS = {
+    "ocr":    ["all", "charfix", "spellcorrect"],
+    "asr":    ["all", "truecase", "homophone"],
+    "social": ["all", "unrepeat", "unabbrev", "spellcorrect"],
+}
+
+
+# ---------------------------------------------------------------------------
+# ByT5 tokenization
+# ---------------------------------------------------------------------------
+
+
+def tokenize_and_align_labels_byt5(examples, tokenizer, max_length=256):
+    all_input_ids, all_attention_masks, all_labels = [], [], []
+    for tokens, ner_tags in zip(examples["tokens"], examples["ner_tags"]):
+        input_ids = [0]
+        label_ids = [-100]
+        for word, label in zip(tokens, ner_tags):
+            word_ids = tokenizer(word, add_special_tokens=False)["input_ids"]
+            input_ids += word_ids
+            label_ids += [label] + [-100] * (len(word_ids) - 1)
+        input_ids = input_ids[:max_length]
+        label_ids = label_ids[:max_length]
+        pad_len = max_length - len(input_ids)
+        all_input_ids.append(input_ids + [0] * pad_len)
+        all_attention_masks.append([1] * len(input_ids) + [0] * pad_len)
+        all_labels.append(label_ids + [-100] * pad_len)
+    return {
+        "input_ids": all_input_ids,
+        "attention_mask": all_attention_masks,
+        "labels": all_labels,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Loader
+# ---------------------------------------------------------------------------
+
+
+def find_best_checkpoint(model_key: str) -> str:
+    model_dir = os.path.join(CHECKPOINTS_DIR, model_key)
+    cps = sorted(glob.glob(os.path.join(model_dir, "checkpoint-*")))
+    if not cps:
+        raise FileNotFoundError(f"No checkpoints in {model_dir}")
+    return cps[-1]
+
+
+def load_model_and_tokenizer(name: str):
+    if name == "bert-base-uncased":
+        ckpt = find_best_checkpoint("bert-base-uncased")
+        model = BertForTokenClassification.from_pretrained(ckpt)
+        tok = AutoTokenizer.from_pretrained("bert-base-uncased", add_prefix_space=True)
+        return model, tok, tokenize_and_align_labels, 32, None
+    if name == "bert-base-cased":
+        ckpt = os.path.join(CHECKPOINTS_DIR, "bert-base-cased", "checkpoint-878")
+        model = BertForTokenClassification.from_pretrained(ckpt)
+        tok = AutoTokenizer.from_pretrained("bert-base-cased", add_prefix_space=True)
+        return model, tok, tokenize_and_align_labels, 32, None
+    if name == "gpt2":
+        ckpt = find_best_checkpoint("gpt2")
+        model = GPT2ForTokenClassification.from_pretrained(ckpt)
+        tok = AutoTokenizer.from_pretrained("gpt2", add_prefix_space=True)
+        tok.pad_token = tok.eos_token
+        return model, tok, tokenize_and_align_labels, 16, None
+    if name == "google/byt5-small":
+        ckpt = find_best_checkpoint("byt5")
+        config = T5Config.from_pretrained("google/byt5-small")
+        model = ByT5ForTokenClassification(config, num_labels=NUM_LABELS)
+        _bin = os.path.join(ckpt, "pytorch_model.bin")
+        _sft = os.path.join(ckpt, "model.safetensors")
+        if os.path.exists(_bin):
+            state = torch.load(_bin, map_location="cpu")
+            model.load_state_dict(state, strict=False)
+        elif os.path.exists(_sft):
+            from safetensors.torch import load_file as _load_sf
+            state = _load_sf(_sft)
+            model.load_state_dict(state, strict=False)
+        else:
+            raise FileNotFoundError(f"No weights in {ckpt}")
+        tok = AutoTokenizer.from_pretrained("google/byt5-small")
+        return model, tok, tokenize_and_align_labels_byt5, 2, {"max_length": 256}
+    raise ValueError(name)
+
+
+# ---------------------------------------------------------------------------
+# Eval
+# ---------------------------------------------------------------------------
+
+
+def eval_on_dataset(model, tokenizer, tokenize_fn, ds,
+                    per_device_eval_batch_size=32, tokenize_kwargs=None):
+    kwargs = tokenize_kwargs or {}
+    tokenized = ds.map(
+        lambda ex: tokenize_fn(ex, tokenizer, **kwargs),
+        batched=True,
+        remove_columns=ds.column_names,
+    )
+    eval_args = TrainingArguments(
+        output_dir="/tmp/eval_tmp",
+        per_device_eval_batch_size=per_device_eval_batch_size,
+        fp16=(DEVICE == "cuda"),
+        report_to="none",
+    )
+    trainer = Trainer(
+        model=model,
+        args=eval_args,
+        eval_dataset=tokenized,
+        data_collator=DataCollatorForTokenClassification(tokenizer),
+        compute_metrics=make_compute_metrics(LABEL_NAMES),
+    )
+    trainer.callback_handler.on_train_begin(trainer.args, trainer.state, trainer.control)
+    m = trainer.evaluate()
+    out = {
+        "f1": round(float(m["eval_f1"]), 4),
+        "precision": round(float(m["eval_precision"]), 4),
+        "recall": round(float(m["eval_recall"]), 4),
+    }
+    del trainer, tokenized
+    gc.collect()
+    if torch.backends.mps.is_available():
+        torch.mps.empty_cache()
+    return out
+
+
+def apply_pipeline_to_split(ds_split, pipe):
+    def _apply(example):
+        orig = example["tokens"]
+        new = pipe(orig)
+        assert len(new) == len(orig), f"len mismatch {len(orig)} -> {len(new)}"
+        example["tokens"] = new
+        return example
+    return ds_split.map(_apply)
+
+
+def main():
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <model_name>", file=sys.stderr)
+        sys.exit(1)
+    model_name = sys.argv[1]
+    safe = model_name.replace("/", "__")
+
+    os.makedirs(PARTIALS_DIR, exist_ok=True)
+
+    print(f"[eval_ablation] device={DEVICE} model={model_name}", flush=True)
+
+    # Prime truecase dict for asr_truecase
+    load_truecase_dict(TRUECASE_PATH)
+
+    model, tok, tfn, bs, tkw = load_model_and_tokenizer(model_name)
+    print("  loaded.", flush=True)
+
+    results = []
+    for noise, configs in CONFIGS.items():
+        noisy_ds = load_from_disk(os.path.join(NOISY_DIR, noise))["test"]
+
+        for cfg in configs:
+            skip = None if cfg == "all" else cfg
+            label = "all" if skip is None else f"-{skip}"
+            print(f"  {noise} / {label} ...", flush=True)
+
+            pipe = build_pipeline(noise, skip)
+            preproc_ds = apply_pipeline_to_split(noisy_ds, pipe)
+
+            r = eval_on_dataset(model, tok, tfn, preproc_ds,
+                                per_device_eval_batch_size=bs,
+                                tokenize_kwargs=tkw)
+            r.update({"model": model_name, "noise": noise, "config": label})
+            print(f"    -> f1={r['f1']}", flush=True)
+            results.append(r)
+
+    out_path = os.path.join(PARTIALS_DIR, f"{safe}.json")
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2)
+    print(f"Wrote {out_path}", flush=True)
+
+
+if __name__ == "__main__":
+    main()

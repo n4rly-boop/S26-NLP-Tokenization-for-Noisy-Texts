@@ -1,0 +1,82 @@
+[
+  {
+    "f1": 0.597,
+    "precision": 0.5994,
+    "recall": 0.5947,
+    "model": "gpt2",
+    "noise": "ocr",
+    "config": "all"
+  },
+  {
+    "f1": 0.5451,
+    "precision": 0.5406,
+    "recall": 0.5498,
+    "model": "gpt2",
+    "noise": "ocr",
+    "config": "-charfix"
+  },
+  {
+    "f1": 0.6018,
+    "precision": 0.5941,
+    "recall": 0.6096,
+    "model": "gpt2",
+    "noise": "ocr",
+    "config": "-spellcorrect"
+  },
+  {
+    "f1": 0.462,
+    "precision": 0.483,
+    "recall": 0.4428,
+    "model": "gpt2",
+    "noise": "asr",
+    "config": "all"
+  },
+  {
+    "f1": 0.0322,
+    "precision": 0.2594,
+    "recall": 0.0172,
+    "model": "gpt2",
+    "noise": "asr",
+    "config": "-truecase"
+  },
+  {
+    "f1": 0.462,
+    "precision": 0.4828,
+    "recall": 0.443,
+    "model": "gpt2",
+    "noise": "asr",
+    "config": "-homophone"
+  },
+  {
+    "f1": 0.5431,
+    "precision": 0.5298,
+    "recall": 0.557,
+    "model": "gpt2",
+    "noise": "social",
+    "config": "all"
+  },
+  {
+    "f1": 0.5429,
+    "precision": 0.5299,
+    "recall": 0.5565,
+    "model": "gpt2",
+    "noise": "social",
+    "config": "-unrepeat"
+  },
+  {
+    "f1": 0.5433,
+    "precision": 0.5301,
+    "recall": 0.5572,
+    "model": "gpt2",
+    "noise": "social",
+    "config": "-unabbrev"
+  },
+  {
+    "f1": 0.5296,
+    "precision": 0.4892,
+    "recall": 0.5774,
+    "model": "gpt2",
+    "noise": "social",
+    "config": "-spellcorrect"
+  }
+]

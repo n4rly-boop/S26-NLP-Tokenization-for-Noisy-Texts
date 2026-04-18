@@ -1,0 +1,82 @@
+[
+  {
+    "f1": 0.7843,
+    "precision": 0.7878,
+    "recall": 0.7808,
+    "model": "google/byt5-small",
+    "noise": "ocr",
+    "config": "all"
+  },
+  {
+    "f1": 0.6956,
+    "precision": 0.7127,
+    "recall": 0.6792,
+    "model": "google/byt5-small",
+    "noise": "ocr",
+    "config": "-charfix"
+  },
+  {
+    "f1": 0.8008,
+    "precision": 0.8005,
+    "recall": 0.801,
+    "model": "google/byt5-small",
+    "noise": "ocr",
+    "config": "-spellcorrect"
+  },
+  {
+    "f1": 0.5901,
+    "precision": 0.6295,
+    "recall": 0.5554,
+    "model": "google/byt5-small",
+    "noise": "asr",
+    "config": "all"
+  },
+  {
+    "f1": 0.3638,
+    "precision": 0.6656,
+    "recall": 0.2503,
+    "model": "google/byt5-small",
+    "noise": "asr",
+    "config": "-truecase"
+  },
+  {
+    "f1": 0.5988,
+    "precision": 0.6359,
+    "recall": 0.5657,
+    "model": "google/byt5-small",
+    "noise": "asr",
+    "config": "-homophone"
+  },
+  {
+    "f1": 0.7353,
+    "precision": 0.716,
+    "recall": 0.7556,
+    "model": "google/byt5-small",
+    "noise": "social",
+    "config": "all"
+  },
+  {
+    "f1": 0.732,
+    "precision": 0.7117,
+    "recall": 0.7535,
+    "model": "google/byt5-small",
+    "noise": "social",
+    "config": "-unrepeat"
+  },
+  {
+    "f1": 0.7353,
+    "precision": 0.716,
+    "recall": 0.7556,
+    "model": "google/byt5-small",
+    "noise": "social",
+    "config": "-unabbrev"
+  },
+  {
+    "f1": 0.7077,
+    "precision": 0.6566,
+    "recall": 0.7674,
+    "model": "google/byt5-small",
+    "noise": "social",
+    "config": "-spellcorrect"
+  }
+]
