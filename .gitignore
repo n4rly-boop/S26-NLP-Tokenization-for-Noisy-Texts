@@ -1,6 +1,9 @@
 # Data (downloaded locally, not tracked)
 data/raw/
 data/noisy/
+data/preprocessed/ocr/
+data/preprocessed/asr/
+data/preprocessed/social/
 
 # Python
 __pycache__/

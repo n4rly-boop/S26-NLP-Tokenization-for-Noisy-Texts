@@ -1,0 +1,23 @@
+[
+  {
+    "model": "google/byt5-small",
+    "noise": "ocr",
+    "f1": 0.7847,
+    "precision": 0.7884,
+    "recall": 0.781
+  },
+  {
+    "model": "google/byt5-small",
+    "noise": "asr",
+    "f1": 0.5901,
+    "precision": 0.6295,
+    "recall": 0.5554
+  },
+  {
+    "model": "google/byt5-small",
+    "noise": "social",
+    "f1": 0.7351,
+    "precision": 0.7157,
+    "recall": 0.7556
+  }
+]

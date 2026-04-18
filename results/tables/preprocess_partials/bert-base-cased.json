@@ -1,0 +1,23 @@
+[
+  {
+    "model": "bert-base-cased",
+    "noise": "ocr",
+    "f1": 0.7996,
+    "precision": 0.8106,
+    "recall": 0.7889
+  },
+  {
+    "model": "bert-base-cased",
+    "noise": "asr",
+    "f1": 0.6746,
+    "precision": 0.7073,
+    "recall": 0.6448
+  },
+  {
+    "model": "bert-base-cased",
+    "noise": "social",
+    "f1": 0.7396,
+    "precision": 0.7377,
+    "recall": 0.7415
+  }
+]

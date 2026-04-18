@@ -11,3 +11,4 @@ sentencepiece
 protobuf
 jupyter
 ipykernel
+pyspellchecker>=0.7
