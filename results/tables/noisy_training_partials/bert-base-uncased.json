@@ -1,0 +1,30 @@
+[
+  {
+    "f1": 0.8779,
+    "precision": 0.8645,
+    "recall": 0.8916,
+    "model": "bert-base-uncased",
+    "noise": "clean"
+  },
+  {
+    "f1": 0.7647,
+    "precision": 0.7758,
+    "recall": 0.7539,
+    "model": "bert-base-uncased",
+    "noise": "ocr"
+  },
+  {
+    "f1": 0.8518,
+    "precision": 0.8417,
+    "recall": 0.8623,
+    "model": "bert-base-uncased",
+    "noise": "asr"
+  },
+  {
+    "f1": 0.7643,
+    "precision": 0.7551,
+    "recall": 0.7737,
+    "model": "bert-base-uncased",
+    "noise": "social"
+  }
+]
