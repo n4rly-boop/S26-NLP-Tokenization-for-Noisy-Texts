@@ -20,5 +20,8 @@ venv/
 # Results (generated, not tracked unless explicitly added)
 results/
 
+# Local notes (not tracked)
+docs/
+
 # OS
 .DS_Store
