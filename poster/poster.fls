@@ -2,7 +2,7 @@ PWD /Users/narly/Code/Study/S26/NLP/S26-NLP-Tokenization-for-Noisy-Texts/poster
 INPUT /usr/local/texlive/2024/texmf.cnf
 INPUT /usr/local/texlive/2024/texmf-dist/web2c/texmf.cnf
 INPUT /usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT poster.tex
+INPUT /Users/narly/Code/Study/S26/NLP/S26-NLP-Tokenization-for-Noisy-Texts/poster/poster.tex
 OUTPUT poster.log
 INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/tikzposter/tikzposter.cls
 INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/tikzposter/tikzposter.cls

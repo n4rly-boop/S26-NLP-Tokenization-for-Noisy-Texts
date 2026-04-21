@@ -143,7 +143,7 @@ Either intervention alone recovers $\approx$ half the noise gap; best-per-cell a
 \block{Conclusions}{
 \begin{itemize}
 \item ``No UNK'' $\neq$ noise-robust. Coverage = fertility inflation + token drift. Byte-level helps tokenizer layer, not F1 layer.
-\item Single component dominates per channel (truecase / ASR, charfix / OCR) \,---\, target, don't uniformly preprocess.
+\item Single component dominates per channel (truecase / ASR, charfix / OCR, spellcheck / social) \,---\, target, don't uniformly preprocess.
 \item Preprocess vs fine-tune = per-cell tradeoff; both act via
 \textbf{token stability} (causal lever, $r{=}0.88$).
 \end{itemize}
@@ -157,7 +157,7 @@ Either intervention alone recovers $\approx$ half the noise gap; best-per-cell a
 \includegraphics[width=0.98\linewidth]{figures/fertility_3panel.pdf}\\[1pt]
 \raggedright\small
 Subword tokenizers fragment heavily under OCR (\brd{+45\% to +50\%} tokens/word).
-Byte-level is structurally noise-robust (\callout{+4\%}). Preprocess restores
+Byte-level is structurally noise-robust (\callout{+2\% social, +4\% OCR, +12\% ASR}). Preprocess restores
 fertility close to clean on OCR/social; ASR is modest (phonetic swaps produce
 in-vocab words).
 }
@@ -167,15 +167,15 @@ in-vocab words).
 \includegraphics[width=0.98\linewidth]{figures/overlap_3panel.pdf}\\[1pt]
 \raggedright\small
 ASR scrambles \emph{cased} tokenizer outputs most (Jaccard to \brd{0.45-0.48});
-truecasing recovers \callout{half}. ByT5 stays above 0.67 across all channels.
+truecasing recovers \callout{half}. ByT5 stays $\geq 0.67$ across all channels.
 }
 
 \block{Mitigation matrix: F1 per (model, noise) $\times$ intervention}{
 \centering
 \includegraphics[width=0.82\linewidth]{figures/f1_heatmap.pdf}\\[1pt]
 \raggedright\small
-\textbf{No universal winner.} Preprocess dominates gpt2; noisy-fine-tune
-dominates bert-uncased and byt5; the two \emph{tie} on bert-cased. ASR rows are
+\textbf{No universal winner.} Preprocess wins all gpt2 cells; noisy-fine-tune
+wins byt5 and 2/3 bert-uncased; the two \emph{split} on bert-cased. ASR rows are
 darkest under noise (\brd{0.03 gpt2, 0.21 bert-cased}) and lighten most under
 either intervention (outline = best non-clean intervention per row).
 }
@@ -213,7 +213,7 @@ Across \callout{28 LOO component cells}, F1 contribution is strongly predicted b
 
 \block{Limitations \& code}{
 \footnotesize
-\textbf{Limits:} 1-epoch training; rule-based preprocess (no contextual MLM); punct-restore out-of-scope (BIO); English NER only. Refs (Belinkov\&Bisk, TextFlint, CoNLL, seqeval) in repo README.\\[1pt]
+\textbf{Limits:} 1-epoch training; rule-based preprocess (no contextual MLM); punct-restore out-of-scope (BIO); English NER only; gpt2 clean F1 low (0.69) \,---\, absolute cross-model comparisons skew. Refs (Belinkov\&Bisk, TextFlint, CoNLL, seqeval) in repo README.\\[1pt]
 \textbf{Code:} \texttt{github.com/n4rly-boop/S26-NLP-Tokenization-for-Noisy-Texts}
 }
 
